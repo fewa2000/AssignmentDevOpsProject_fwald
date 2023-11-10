@@ -26,7 +26,7 @@ namespace AssignmentDevOpsProject_fwald.Services
                 response.EnsureSuccessStatusCode();
 
                 string content = await response.Content.ReadAsStringAsync();
-                var json = JArray.Parse(content); 
+                var json = JObject.Parse(content); 
 
                 string imageUrl = json[0]["urls"]["regular"].ToString();
 

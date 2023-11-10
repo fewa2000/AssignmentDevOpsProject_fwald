@@ -10,7 +10,7 @@ public static class QueueTriggerFunctionImageProcessing
 {
     [FunctionName("ProcessImageQueue")]
     public static async Task ProcessImageQueue(
-        [QueueTrigger("process-image-queue", Connection = "AzureWebJobsStorage")] string imageInfoJson,
+        [QueueTrigger("input-queue", Connection = "AzureWebJobsStorage")] string imageInfoJson,
         ILogger log)
     {
         log.LogInformation($"Processing image: {imageInfoJson}");

@@ -1,36 +1,48 @@
 ﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using System.IO;
 using AssignmentDevOpsProject_fwald.Services;
+using Microsoft.Extensions.Configuration;
+using System;
 
 public static class QueueTriggerFunctionStartingJob
 {
     [FunctionName("ProcessStartJobQueue")]
     public static async Task ProcessStartJobQueue(
-        [QueueTrigger("process-image-queue", Connection = "AzureWebJobsStorage")] string queueItem,
-        [Queue("process-image-queue", Connection = "AzureWebJobsStorage")] ICollector<string> outputQueue,
-        ILogger log)
+        [QueueTrigger("input-queue", Connection = "AzureWebJobsStorage")] string queueItem,
+        [Queue("output-queue", Connection = "AzureWebJobsStorage")] ICollector<string> outputQueue,
+        ILogger log,
+        IHttpClientFactory httpClientFactory,
+        ExecutionContext context) 
     {
         log.LogInformation($"Processing queue item: {queueItem}");
 
-        var buienradarAPI = new BuienraderAPI(new HttpClient());
-        var unsplashAPI = new UnsplashAPI(new HttpClient(), "UnsplashApiKey");
+        string unsplashApiKey = Environment.GetEnvironmentVariable("UnsplashApiKey");
 
-        var weatherData = await buienradarAPI.GetWeatherDataAsync();
-
-        var imageUrls = await unsplashAPI.GetImageUrlsAsync();
-
-        foreach (var imageUrl in imageUrls)
+        try
         {
-            string imageProcessingInfo = $"{{\"weatherData\": \"{weatherData}\", \"imageUrl\": \"{imageUrl}\"}}";
+            var httpClient = httpClientFactory.CreateClient();
+            var buienradarAPI = new BuienraderAPI(httpClient);
+            var unsplashAPI = new UnsplashAPI(httpClient, unsplashApiKey);
 
-            outputQueue.Add(imageProcessingInfo);
+            var weatherData = await buienradarAPI.GetWeatherDataAsync();
+            var imageUrls = await unsplashAPI.GetImageUrlsAsync();
+
+            if (imageUrls != null)
+            {
+                foreach (var imageUrl in imageUrls)
+                {
+                    string imageProcessingInfo = $"{{\"weatherData\": \"{weatherData}\", \"imageUrl\": \"{imageUrl}\"}}";
+                    outputQueue.Add(imageProcessingInfo);
+                }
+            }
+            else
+            {
+                log.LogWarning("No image URLs found.");
+            }
         }
-
+        catch (Exception ex)
+        {
+            log.LogError($"An error occurred: {ex.Message}");
+        }
     }
-   
 }
-

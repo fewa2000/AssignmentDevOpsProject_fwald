@@ -1,26 +1,32 @@
 trigger:
-- main
+- master
 
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  buildConfiguration: 'Release'
+
 steps:
 - task: DotNetCoreCLI@2
-  displayName: 'Restore dependencies'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build'
   inputs:
     command: 'build'
+    arguments: '--configuration $(buildConfiguration)'
     projects: '**/*.csproj'
-    arguments: '--configuration Release'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Run Tests'
   inputs:
-    command: 'test'
-    projects: '**/*Tests/*.csproj'
-    arguments: '--configuration Release'
+    command: 'publish'
+    publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'functionapp'
