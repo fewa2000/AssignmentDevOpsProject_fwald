@@ -11,7 +11,6 @@ namespace AssignmentDevOpsProject_fwald
         public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddHttpClient();
-            // Add other services and configurations as needed
         }
     }
 }
