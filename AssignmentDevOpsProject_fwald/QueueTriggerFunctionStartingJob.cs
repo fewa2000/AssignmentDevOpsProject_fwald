@@ -16,25 +16,21 @@ public static class QueueTriggerFunctionStartingJob
     {
         log.LogInformation($"Processing queue item: {queueItem}");
 
-        // Initialize your API services (make sure to manage dependencies appropriately)
         var buienradarAPI = new BuienraderAPI(new HttpClient());
         var unsplashAPI = new UnsplashAPI(new HttpClient(), "UnsplashApiKey");
 
-        // Fetch weather data
         var weatherData = await buienradarAPI.GetWeatherDataAsync();
 
-        // Assuming Unsplash API returns a list of image URLs
         var imageUrls = await unsplashAPI.GetImageUrlsAsync();
 
         foreach (var imageUrl in imageUrls)
         {
-
             string imageProcessingInfo = $"{{\"weatherData\": \"{weatherData}\", \"imageUrl\": \"{imageUrl}\"}}";
 
             outputQueue.Add(imageProcessingInfo);
         }
 
-        
     }
+   
 }
 

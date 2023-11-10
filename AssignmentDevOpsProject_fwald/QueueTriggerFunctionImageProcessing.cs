@@ -15,25 +15,18 @@ public static class QueueTriggerFunctionImageProcessing
     {
         log.LogInformation($"Processing image: {imageInfoJson}");
 
-        
         var imageInfo = JsonConvert.DeserializeObject<ImageInfo>(imageInfoJson);
 
-        
         using var httpClient = new HttpClient();
 
-        
         var response = await httpClient.GetAsync(imageInfo.ImageUrl);
         response.EnsureSuccessStatusCode();
         var imageStream = await response.Content.ReadAsStreamAsync();
 
-        
         var processedImageStream = ImageEditor.ImageHelper.AddTextToImage(imageStream, (imageInfo.WeatherData, (10, 10), 24, "#FFFFFF"));
 
-        
         var blobStorage = new BlobStorage("AzureWebJobsStorage");
 
-        // Upload the processed image to Azure Blob Storage
-        // Define a unique name for the blob
         string blobName = $"processed_image_{DateTime.UtcNow.Ticks}.jpg";
         await blobStorage.UploadImageAsync(processedImageStream, "BlobContainer", blobName);
 
@@ -45,4 +38,5 @@ public static class QueueTriggerFunctionImageProcessing
         public string WeatherData { get; set; }
         public string ImageUrl { get; set; }
     }
+   
 }

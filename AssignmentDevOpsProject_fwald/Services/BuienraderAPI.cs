@@ -32,9 +32,8 @@ namespace AssignmentDevOpsProject_fwald.Services
                         var imageResponse = await _httpClient.GetAsync(imageUrl);
                         imageResponse.EnsureSuccessStatusCode();
 
-                        // Read the image data as a byte array
                         byte[] imageData = await imageResponse.Content.ReadAsByteArrayAsync();
-                        return imageData; // Return the image data
+                        return imageData; 
                     }
                     else
                     {
