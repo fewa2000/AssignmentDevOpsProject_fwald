@@ -1,7 +1,7 @@
 # Variables
 $resourceGroupName = "AssignmentDevOpsProjectRessourceGroup"
 $templateFile = "./azurefunctions.bicep"
-$location = "northeurope"
+$location = "westeurope"
 $functionAppPath = "./AssignmentDevOpsProject_fwald/AssignmentDevOpsProject_fwald.csproj"
 $functionAppName = "AssignmentDevOpsProject_fwald" # Manually specify your Function App name
 
