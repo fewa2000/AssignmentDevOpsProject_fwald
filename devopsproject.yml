@@ -1,67 +1,35 @@
 trigger:
-- master
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   buildConfiguration: 'Release'
 
-stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: BuildJob
-    displayName: Build and Publish
-    steps:
-    - task: UseDotNet@2
-      inputs:
-        packageType: 'sdk'
-        version: '3.1.x'  
-        installationPath: $(Agent.ToolsDirectory)/dotnet
+steps:
+# Checkout the code from your repository
+- checkout: self
+  persistCredentials: true
 
-    - task: DotNetCoreCLI@2
-      displayName: Restore
-      inputs:
-        command: 'restore'
-        projects: '**/*.csproj'
+# Restore dependencies
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '**/*.sln'
+  displayName: 'Restore NuGet Packages'
 
-    - task: DotNetCoreCLI@2
-      displayName: Build
-      inputs:
-        command: 'build'
-        arguments: '--configuration $(buildConfiguration)'
-        projects: '**/*.csproj'
+# Build the application
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+  displayName: 'Build Application'
 
-    - task: DotNetCoreCLI@2
-      displayName: Publish
-      inputs:
-        command: 'publish'
-        publishWebProjects: true
-        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-        zipAfterPublish: true
-
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish Artifacts'
-      inputs:
-        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-        artifactName: 'functionapp'
-
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
-  condition: succeeded('Build')
-  jobs:
-  - deployment: DeployJob
-    displayName: Deploy to Azure
-    environment: 'Developing'  
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureFunctionApp@1
-            inputs:
-              azureSubscription: 'AssignmentDevOpsProject'  
-              appType: 'functionAppLinux'  
-              appName: 'AssignmentDevOpsProject_fwald'  
-              package: '$(Pipeline.Workspace)/functionapp/$(Build.BuildId).zip'
+# Execute deploy.ps1 script
+- task: PowerShell@2
+  inputs:
+    targetType: 'filePath'
+    filePath: 'deployment.ps1'
+    pwsh: true
+  displayName: 'Deploy to Azure'

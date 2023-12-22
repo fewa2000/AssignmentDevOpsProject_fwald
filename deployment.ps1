@@ -1,22 +1,44 @@
-$prefix              = 'INHOLLAND-'+ (Get-Random -Minimum 1000 -Maximum 9999)
-$resource_group_name = "$prefix-Assignment-D-AZWE-RG-1"
-$template            = "./azurefunctions.bicep"
+# Variables
+$resourceGroupName = "AssignmentDevOpsProjectRessourceGroup"
+$templateFile = "./azurefunctions.bicep"
+$location = "northeurope"
+$functionAppPath = "./AssignmentDevOpsProject_fwald/AssignmentDevOpsProject_fwald.csproj"
+$functionAppName = "AssignmentDevOpsProject_fwald" # Manually specify your Function App name
 
-$parameters = @{
-    prefix      = $prefix
-    serviceTag  = "Assignment"
-    environment = "D"
-    regionTag   = "AZWE"
+# Authenticate with Azure (if necessary)
+#Connect-AzAccount
+
+# Deploy Bicep template
+Write-Host "Deploying Azure resources..."
+$deploymentResult = az deployment group create `
+  --resource-group $resourceGroupName `
+  --template-file $templateFile `
+  --parameters location=$location
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Deployment failed"
+    exit
 }
 
-$parameters = $parameters.Keys.ForEach({"$_=$($parameters[$_])"}) -join ' '
+# Publish Azure Function
+Write-Host "Publishing Azure Function..."
+dotnet publish $functionAppPath --configuration Release --output .\publish
 
-Write-Host "Deploying resources in $resource_group_name"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Publishing failed"
+    exit
+}
 
-# Create a new resource-group
-az group create -l westeurope -n $resource_group_name
+# Deploy the function app using Azure CLI
+Write-Host "Deploying Function App to Azure..."
+az functionapp deployment source config-zip `
+  --resource-group $resourceGroupName `
+  --name $functionAppName `
+  --src .\publish
 
-# Deploy resources inside resource-group
-$cmd = "az deployment group create --mode Incremental --resource-group $resource_group_name --template-file $template --parameters $parameters"
-Write-Host $cmd
-Invoke-Expression  $cmd
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Function App deployment failed"
+    exit
+}
+
+Write-Host "Deployment completed successfully."

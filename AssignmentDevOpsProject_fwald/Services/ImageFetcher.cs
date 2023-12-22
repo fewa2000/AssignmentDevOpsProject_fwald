@@ -5,38 +5,44 @@ using System.Threading.Tasks;
 
 namespace AssignmentDevOpsProject_fwald.Services
 {
-    internal class UnsplashAPI
+    public class ImageFetcher
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        private readonly string _unsplashApiKey;
 
-        public UnsplashAPI(HttpClient httpClient, string apiKey)
+        public ImageFetcher(HttpClient httpClient, string apiKey)
         {
             _httpClient = httpClient;
-            _apiKey = apiKey;
+            _unsplashApiKey = apiKey;
         }
-        public async Task<byte[]> GetImageDataAsync()
+
+        public async Task<Stream> FetchImageAsync(string category = null)
         {
             try
             {
-                string apiUrl = "https://api.unsplash.com/photos/random"; 
-                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Client-ID", _apiKey);
+                string apiUrl = "https://api.unsplash.com/photos/random/?client_id=" + _unsplashApiKey + "&count=1";
+                if (!string.IsNullOrEmpty(category))
+                {
+                    apiUrl += $"?query={Uri.EscapeDataString(category)}";
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Client-ID", _unsplashApiKey);
 
                 var response = await _httpClient.GetAsync(apiUrl);
                 response.EnsureSuccessStatusCode();
 
                 string content = await response.Content.ReadAsStringAsync();
-                var json = JObject.Parse(content); 
+                var json = JObject.Parse(content);
 
-                string imageUrl = json[0]["urls"]["regular"].ToString();
+                string imageUrl = json["urls"]["regular"].ToString();
 
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     var imageResponse = await _httpClient.GetAsync(imageUrl);
                     imageResponse.EnsureSuccessStatusCode();
 
-                    byte[] imageData = await imageResponse.Content.ReadAsByteArrayAsync();
-                    return imageData; 
+                    // Return the image as a Stream
+                    return await imageResponse.Content.ReadAsStreamAsync();
                 }
                 else
                 {
@@ -50,9 +56,6 @@ namespace AssignmentDevOpsProject_fwald.Services
                 return null;
             }
         }
-        internal Task<IEnumerable<object>> GetImageUrlsAsync()
-        {
-            throw new NotImplementedException();
-        }
+
     }
 }
