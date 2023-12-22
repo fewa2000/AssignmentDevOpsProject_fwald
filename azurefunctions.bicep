@@ -2,7 +2,7 @@ param location string = resourceGroup().location
 
 // Existing resource names
 var storageAccountName = 'assignmstorageaccount' // Replace with your actual storage account name
-var functionAppName = 'AssignmentDevOpsProject_fwald' // Replace with your actual function app name
+var functionAppName = 'AssignmentDevOpsProjectfwald' // Replace with your actual function app name
 
 // Storage account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
